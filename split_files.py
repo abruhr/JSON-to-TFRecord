@@ -97,7 +97,7 @@ def json_split(train,valid,test):
     for key,value in data.items():
         key_name=key+'.jpg'
         if key_name in train:     
-            filename_train=key
+            filename_train=key_name
             width_train=value['width']
             height_train=value['height']
             bbox_list_train=value['bbox'][0]
@@ -110,7 +110,7 @@ def json_split(train,valid,test):
             train_csv_list.append(value_train)
         
         if key_name in valid:
-            filename_valid=key
+            filename_valid=key_name
             width_valid=value['width']
             height_valid=value['height']
             bbox_list_valid=value['bbox'][0]
@@ -123,7 +123,7 @@ def json_split(train,valid,test):
             valid_csv_list.append(value_valid)
 
         if key_name in test:
-            filename_test=key
+            filename_test=key_name
             width_test=value['width']
             height_test=value['height']
             bbox_list_test=value['bbox'][0]
