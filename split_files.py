@@ -1,14 +1,16 @@
 """ Images Split and Convert to CSV Files for TF Model. Creates train, validation and test folders into the image directory.
 Assumption: Single Bounding Box JSON file and images file to be split (split to train,test,validation)
 
-usage: split_files.py [-h] [-j JSON_DIR] [-i IMAGE_DIR]
+usage: split_files.py [-h] [-j JSON_DIR] [-i IMAGE_DIR] [-s TRAIN_SPLIT]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -j JSON_DIR, --json_dir JSON_DIR
+  -j, --json_dir 
                         Path to the folder where the input .json files are stored.
-  -i IMAGE_DIR, --image_dir IMAGE_DIR
-                        Path to the folder where the input image files are stored. Defaults to the same directory as JSON_DIR.
+  -i, --image_dir 
+                        Path to the folder where the input image files are stored. 
+  -s, --train_split 
+                        Decimal for percentage for splitting dataset for training. For e.g. 1 being 100%. Default is 0.8 (80%).
 """
 import os
 from random import shuffle
@@ -23,12 +25,15 @@ parser = argparse.ArgumentParser(
 parser.add_argument("-j",
                     "--json_dir",
                     help="Path to the folder where the input json file is stored.",
-                    type=str)
+                    type=str, default=None)
 parser.add_argument("-i",
                     "--image_dir",
                     help="Path to the folder where the input image files are stored. ",
                     type=str, default=None)
-
+parser.add_argument("-s",
+                    "--train_split",
+                    help="Decimal for percentage for splitting dataset for training. For e.g. 1 being 100%. Default is 0.8 (80%)",
+                    type=float, default=0.8)
 args = parser.parse_args()
 
 # Initialize directories
@@ -144,7 +149,7 @@ def json_split(train,valid,test):
 def main():
     image_files=get_file_list_from_dir(args.image_dir)
     shuffled_list=randomize_images(image_files)
-    train, valid, test=split_images(shuffled_list,0.8)
+    train, valid, test=split_images(shuffled_list,args.train_split)
     copy_images(train,valid,test)
     json_split(train,valid,test)
     # print(len(test), len(valid), len(train))

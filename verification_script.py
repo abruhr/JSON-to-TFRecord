@@ -6,7 +6,7 @@ Usage: split_files.py [-h] [-p PARENT_DIR]
 optional arguments:
   -h, --help            show this help message and exit
   -p, --parent_dir 
-                        Path to the folder where image split files and annotations are stored
+                        Directory where image split files and annotations are stored
 """
 import os
 import pandas as pd
@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser(
     description="Checks if the files copied to the respective image directories and their annotations match up. Run this after running split_files.py")
 parser.add_argument("-p",
                     "--parent_dir",
-                    help="Path to the folder where image split files and annotations are stored",
+                    help="Directory where image split files and annotations are stored",
                     type=str)
 
 args = parser.parse_args()
@@ -29,9 +29,9 @@ test_dir=os.path.join(args.parent_dir,"test_images")
 valid_dir=os.path.join(args.parent_dir,"validation_images")
 image_dir=[train_dir,test_dir,valid_dir]
 
-train_annot_dir=train_dir=os.path.join(args.parent_dir,"annotations","train.csv")
-test_annot_dir=train_dir=os.path.join(args.parent_dir,"annotations","test.csv")
-valid_annot_dir=train_dir=os.path.join(args.parent_dir,"annotations","validation.csv")
+train_annot_dir=os.path.join(args.parent_dir,"annotations","train.csv")
+test_annot_dir=os.path.join(args.parent_dir,"annotations","test.csv")
+valid_annot_dir=os.path.join(args.parent_dir,"annotations","validation.csv")
 annot_dir=[train_annot_dir,test_annot_dir,valid_annot_dir]
 
 error_flag=False

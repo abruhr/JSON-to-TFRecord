@@ -1,26 +1,23 @@
-""" Sample TensorFlow json-to-TFRecord converter.
-Assumption: Single Bounding Box JSON file and no images file split (no train,test,validation split)
+""" CSV and Image to TFRecord converter.
+Assumption: split_files.py has already been run and the divisions of train, validation and test CSV annotations and images has been created.
 
-usage: generate_tfrecord.py [-h] [-j JSON_DIR] [-o OUTPUT_PATH] [-i IMAGE_DIR] [-c CSV_PATH]
+usage: generate_tfrecord.py [-h] [-p PARENT_DIR] [-o OUTPUT_DIR]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -j JSON_DIR, --json_dir JSON_DIR
-                        Path to the folder where the input .json files are stored.
-  -o OUTPUT_PATH, --output_path OUTPUT_PATH
-                        Path of output TFRecord (.record) file.
-  -i IMAGE_DIR, --image_dir IMAGE_DIR
-                        Path to the folder where the input image files are stored. Defaults to the same directory as JSON_DIR.
-  -c CSV_PATH, --csv_path CSV_PATH
-                        Path of output .csv file. If none provided, then no file will be written.
+  -p, --parent_dir 
+                        Directory where image split files and annotations are stored
+  -p, --output_dir 
+                        Directory for generating output TFRecord (.record) file.
+
 """
 
 import os
-import glob
+# import glob
 import pandas as pd
 import io
 import argparse
-import json
+# import json
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'    # Suppress TensorFlow logging (1)
 import tensorflow.compat.v1 as tf
@@ -31,54 +28,66 @@ from collections import namedtuple
 # Initiate argument parser
 parser = argparse.ArgumentParser(
     description="Sample TensorFlow JSON-to-TFRecord converter")
-parser.add_argument("-j",
-                    "--json_dir",
-                    help="Path to the folder where the input json files are stored.",
+parser.add_argument("-p",
+                    "--parent_dir",
+                    help="Directory where image split files and annotations are stored",
                     type=str)
 parser.add_argument("-o",
-                    "--output_path",
-                    help="Path of output TFRecord (.record) file.", type=str)
-parser.add_argument("-i",
-                    "--image_dir",
-                    help="Path to the folder where the input image files are stored. "
-                         "Defaults to the same directory as JSON_DIR.",
-                    type=str, default=None)
-parser.add_argument("-c",
-                    "--csv_path",
-                    help="Path of output .csv file. If none provided, then no file will be "
-                         "written.",
-                    type=str, default=None)
+                    "--output_dir",
+                    help="Directory for output TFRecord (.record) file.", type=str)
+
 
 args = parser.parse_args()
 
-if args.image_dir is None:
-    args.image_dir = args.json_dir
+# if args.image_dir is None:
+#     args.image_dir = args.json_dir
 
 # label_map = label_map_util.load_labelmap(args.labels_path)
 # label_map_dict = label_map_util.get_label_map_dict(label_map)
 
-def json_to_csv(path):
-    csv_list = []
-    json_files=glob.glob(path + '/*.json')
-    for json_file in json_files:
-        data_file=open(json_file)   
-        data = json.load(data_file)
-        for key,value in data.items():
-            filename=key
-            width=value['width']
-            height=value['height']
-            bbox_list=value['bbox'][0]
-            class_label=bbox_list['label']
-            xmin=bbox_list['xmin']
-            ymin=bbox_list['ymin']
-            xmax=bbox_list['xmax']
-            ymax=bbox_list['ymax']
-            value = (filename, width,height,class_label,xmin,ymin,xmax,ymax)
-            csv_list.append(value)
-    column_name = ['filename', 'width', 'height',
-                    'class', 'xmin', 'ymin', 'xmax', 'ymax']
-    csv_df = pd.DataFrame(csv_list, columns=column_name)
-    return csv_df
+# Initialize the input and output directories into a list
+train_dir=os.path.join(args.parent_dir,"train_images")
+test_dir=os.path.join(args.parent_dir,"test_images")
+valid_dir=os.path.join(args.parent_dir,"validation_images")
+image_dir=[train_dir,test_dir,valid_dir]
+
+train_annot_dir=os.path.join(args.parent_dir,"annotations","train.csv")
+test_annot_dir=os.path.join(args.parent_dir,"annotations","test.csv")
+valid_annot_dir=os.path.join(args.parent_dir,"annotations","validation.csv")
+annot_dir=[train_annot_dir,test_annot_dir,valid_annot_dir]
+
+train_record_dir=os.path.join(args.output_dir,"train.record")
+test_record_dir=os.path.join(args.output_dir,"test.record")
+valid_record_dir=os.path.join(args.output_dir,"validation.record")
+tfrecord_dir=[train_record_dir,test_record_dir,valid_record_dir]
+
+
+def load_csv(path):
+    df=pd.read_csv(path)
+    return df
+
+# def json_to_csv(path):
+#     csv_list = []
+#     json_files=glob.glob(path + '/*.json')
+#     for json_file in json_files:
+#         data_file=open(json_file)   
+#         data = json.load(data_file)
+#         for key,value in data.items():
+#             filename=key
+#             width=value['width']
+#             height=value['height']
+#             bbox_list=value['bbox'][0]
+#             class_label=bbox_list['label']
+#             xmin=bbox_list['xmin']
+#             ymin=bbox_list['ymin']
+#             xmax=bbox_list['xmax']
+#             ymax=bbox_list['ymax']
+#             value = (filename, width,height,class_label,xmin,ymin,xmax,ymax)
+#             csv_list.append(value)
+#     column_name = ['filename', 'width', 'height',
+#                     'class', 'xmin', 'ymin', 'xmax', 'ymax']
+#     csv_df = pd.DataFrame(csv_list, columns=column_name)
+#     return csv_df
 
 
 def class_text_to_int(row_label):
@@ -137,20 +146,16 @@ def create_tf_example(group, path):
 
 
 def main(_):
-
-    writer = tf.python_io.TFRecordWriter(args.output_path)
-    path = os.path.join(args.image_dir)
-    examples = json_to_csv(args.json_dir)
-    grouped = split(examples, 'filename')
-    for group in grouped:
-        tf_example = create_tf_example(group, path)
-        writer.write(tf_example.SerializeToString())
-    writer.close()
-    print('Successfully created the TFRecord file: {}'.format(args.output_path))
-    if args.csv_path is not None:
-        examples.to_csv(args.csv_path, index=None)
-        print('Successfully created the CSV file: {}'.format(args.csv_path))
-
+    for data in range(3):
+        writer = tf.python_io.TFRecordWriter(tfrecord_dir[data])
+        path = image_dir[data]
+        examples = load_csv(annot_dir[data])
+        grouped = split(examples, 'filename')
+        for group in grouped:
+            tf_example = create_tf_example(group, path)
+            writer.write(tf_example.SerializeToString())
+        writer.close()
+        print('Successfully created the TFRecord file: {}'.format(str(tfrecord_dir[data])))
 
 if __name__ == '__main__':
     tf.app.run()
