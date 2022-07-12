@@ -10,7 +10,7 @@ optional arguments:
   -i, --image_dir 
                         Path to the folder where the input image files are stored. 
   -s, --train_split 
-                        Decimal for percentage for splitting dataset for training. For e.g. 1 being 100%. Default is 0.8 (80%).
+                        Decimal for percentage for splitting dataset for training. For e.g. 1 being 100percentage. Default is 0.8 (80percentage).
 """
 import os
 from random import shuffle
@@ -32,7 +32,7 @@ parser.add_argument("-i",
                     type=str, default=None)
 parser.add_argument("-s",
                     "--train_split",
-                    help="Decimal for percentage for splitting dataset for training. For e.g. 1 being 100%. Default is 0.8 (80%)",
+                    help="Decimal for percentage for splitting dataset for training. For e.g. 1 being 100 percentage. Default is 0.8 (80percentage)",
                     type=float, default=0.8)
 args = parser.parse_args()
 
