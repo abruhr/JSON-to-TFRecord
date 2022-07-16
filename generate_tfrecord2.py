@@ -7,6 +7,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -p, --parent_dir 
                         Directory where image split files and annotations are stored
+  -o, --use_augment 
+                        Choose to use augmented train images folder. Default is None
   -p, --output_dir 
                         Directory for generating output TFRecord (.record) file.
 
@@ -32,6 +34,9 @@ parser.add_argument("-p",
                     "--parent_dir",
                     help="Directory where image split files and annotations are stored",
                     type=str)
+parser.add_argument("-a",
+                    "--use_augment",
+                    help="Choose to use augmented train images folder. Default is None. Enter 'True' to use augmented images", type=bool, default=None)
 parser.add_argument("-o",
                     "--output_dir",
                     help="Directory for output TFRecord (.record) file.", type=str)
@@ -46,12 +51,19 @@ args = parser.parse_args()
 # label_map_dict = label_map_util.get_label_map_dict(label_map)
 
 # Initialize the input and output directories into a list
-train_dir=os.path.join(args.parent_dir,"train_images")
+if args.use_augment == True:
+    train_dir=os.path.join(args.parent_dir,"train_augment_images")
+else:
+    train_dir=os.path.join(args.parent_dir,"train_images")
+
 test_dir=os.path.join(args.parent_dir,"test_images")
 valid_dir=os.path.join(args.parent_dir,"validation_images")
 image_dir=[train_dir,test_dir,valid_dir]
 
-train_annot_dir=os.path.join(args.parent_dir,"annotations","train.csv")
+if args.use_augment == True:
+    train_annot_dir=os.path.join(args.parent_dir,"annotations","train_augment.csv")
+else:
+    train_annot_dir=os.path.join(args.parent_dir,"annotations","train.csv")
 test_annot_dir=os.path.join(args.parent_dir,"annotations","test.csv")
 valid_annot_dir=os.path.join(args.parent_dir,"annotations","validation.csv")
 annot_dir=[train_annot_dir,test_annot_dir,valid_annot_dir]
